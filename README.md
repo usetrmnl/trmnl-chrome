@@ -22,7 +22,7 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 
 ## Setup
 
-1. Get your TRMNL API key from [TRMNL website]
+1. Get your TRMNL API key from [TRMNL Dashboard](https://usetrmnl.com/dashboard)
 2. Click the TRMNL extension icon in Chrome to open settings
 3. Enter your API key and click Save
 4. Open a new tab to start seeing TRMNL images
@@ -34,6 +34,8 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 - Click "Refresh Now" to manually fetch a new image
 - Click "Settings" to update your API key or check status
 - The countdown timer shows when the next automatic refresh will occur
+- Image refresh intervals are synced with server recommendations
+- Automatic backoff is applied when rate limits are hit (429 responses)
 
 ## Development
 

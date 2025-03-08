@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>TRMNL Settings</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+                    "Helvetica Neue", sans-serif;
+                width: 300px;
+                padding: 15px;
+                background-color: #222;
+                color: #fff;
+            }
+
+            h2 {
+                margin-top: 0;
+                font-size: 18px;
+                text-align: center;
+                margin-bottom: 15px;
+                color: #fff;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+            input {
+                width: 100%;
+                padding: 8px;
+                box-sizing: border-box;
+                border: none;
+                border-radius: 4px;
+                background-color: #333;
+                color: #fff;
+            }
+
+            .buttons {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            button {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                background-color: #007bff;
+                color: white;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+
+            button:hover {
+                background-color: #0069d9;
+            }
+
+            .status {
+                margin-top: 10px;
+                font-size: 12px;
+                text-align: center;
+            }
+
+            .info {
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #444;
+                font-size: 12px;
+            }
+
+            .info p {
+                margin: 5px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>TRMNL New Tab Settings</h2>
+
+        <div class="form-group">
+            <label for="api-key">TRMNL API Key</label>
+            <input
+                type="password"
+                id="api-key"
+                placeholder="Enter your TRMNL API key"
+            />
+        </div>
+
+        <div class="buttons">
+            <button id="save-settings">Save</button>
+            <button id="refresh-now">Refresh Now</button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="info">
+            <p id="last-updated">Last updated: Never</p>
+            <p id="next-update">Next update: Never</p>
+            <p id="refresh-rate">Refresh rate: 60 seconds</p>
+        </div>
+
+        <script src="popup.js"></script>
+    </body>
+</html>

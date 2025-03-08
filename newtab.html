@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>New Tab</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <div id="container">
+            <div id="image-container">
+                <!-- Image will be displayed here -->
+                <img id="trmnl-image" src="" alt="TRMNL Display" />
+                <div id="loading">Loading...</div>
+            </div>
+
+            <div id="error-container" class="hidden">
+                <div class="error-box">
+                    <h2>TRMNL API Key Required</h2>
+                    <p>Please set your TRMNL API key to view images.</p>
+                    <div class="api-key-input">
+                        <input
+                            type="password"
+                            id="api-key-input"
+                            placeholder="Enter TRMNL API Key"
+                        />
+                        <button id="save-api-key">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="info-overlay" class="hidden">
+                <div class="info-content">
+                    <p id="refresh-info">
+                        Next refresh:
+                        <span id="next-refresh-time">--:--:--</span>
+                    </p>
+                    <button id="refresh-now">Refresh Now</button>
+                    <button id="open-settings">Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="newtab.js"></script>
+    </body>
+</html>

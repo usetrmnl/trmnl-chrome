@@ -23,13 +23,13 @@ async function initNewTab() {
   await loadImage();
 
   // Show info overlay when hovering on the bottom of the screen
-  document.addEventListener("mousemove", (e) => {
-    if (e.clientY > window.innerHeight - 100) {
-      infoOverlay.classList.remove("hidden");
-    } else {
-      infoOverlay.classList.add("hidden");
-    }
-  });
+  // document.addEventListener("mousemove", (e) => {
+  //   if (e.clientY > window.innerHeight - 100) {
+  //     infoOverlay.classList.remove("hidden");
+  //   } else {
+  //     infoOverlay.classList.add("hidden");
+  //   }
+  // });
 }
 
 // Set up event listeners

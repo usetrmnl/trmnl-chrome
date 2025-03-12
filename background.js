@@ -1,7 +1,7 @@
 // Background script for TRMNL New Tab Display extension
 
 // Constants
-const API_URL = "https://usetrmnl.com/api/display";
+const API_URL = "https://usetrmnl.com/api/current_screen";
 const DEFAULT_REFRESH_RATE = 60; // seconds
 
 // Initialize when extension is installed or updated

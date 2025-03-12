@@ -4,13 +4,35 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>New Tab</title>
+        <script src="./tailwind_4_0_13.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+            rel="stylesheet"
+        />
         <link rel="stylesheet" href="styles.css" />
     </head>
-    <body>
+    <body
+        class="flex justify-center bg-trmnl dark:bg-gray-850 max-w-full overflow-x-hidden"
+    >
         <div id="container">
-            <div id="image-container">
+            <div
+                id="image-container"
+                class="flex flex-col justify-start items-start"
+            >
                 <!-- Image will be displayed here -->
-                <img id="trmnl-image" src="" alt="TRMNL Display" />
+                <!-- <h2
+                    class="block text-left w-full eb-garamond-500 tracking-tight font-medium text-gray-900 dark:text-white text-lg md:text-2xl mb-0.5 leading-none mb-4"
+                >
+                    Good evening Marcus!
+                </h2> -->
+                <img
+                    id="trmnl-image"
+                    src=""
+                    alt="TRMNL Display"
+                    class="rounded-xl bg-gray-200 dark:bg-gray-700 shadow-sm dark:shadow-black border border-gray-300 dark:border-gray-650"
+                />
                 <div id="loading">Loading...</div>
             </div>
 

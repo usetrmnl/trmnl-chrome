@@ -4,6 +4,13 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>TRMNL Settings</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+            rel="stylesheet"
+        />
+
         <style>
             body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -28,9 +35,6 @@
             }
 
             label {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: bold;
             }
 
             input {
@@ -46,29 +50,6 @@
             .buttons {
                 display: flex;
                 justify-content: space-between;
-            }
-
-            button {
-                align-items: center;
-                background-color: rgb(248, 101, 75);
-                border-radius: 0.5rem;
-                border: none;
-                color: white;
-                cursor: pointer;
-                display: inline-flex;
-                flex-shrink: 0;
-                font-size: 0.875rem;
-                font-weight: 500;
-                gap: 0.375rem;
-                justify-content: center;
-                padding: 0.5rem 0.75rem;
-                transition: all 150ms;
-                white-space: nowrap;
-            }
-
-            button:hover {
-                background-color: #fff;
-                color: rgb(248, 101, 75);
             }
 
             .status {
@@ -87,33 +68,78 @@
             .info p {
                 margin: 5px 0;
             }
+
+            .bg-primary-500 {
+                background-color: rgb(248 101 75);
+            }
+            .hover\:bg-primary-600:hover {
+                background-color: rgb(224 91 68);
+            }
+
+            .dark\:bg-primary-600 {
+                background-color: rgb(224 91 68);
+            }
+
+            .dark\:hover\:bg-primary-500 {
+                background-color: rgb(248 101 75);
+            }
+
+            .bg-gray-100\/80 {
+                background-color: #e7e7e7;
+            }
+
+            .dark\:bg-gray-850\/80 {
+                background-color: #0c0c0c;
+            }
+
+            .eb-garamond-500 {
+                font-family: "EB Garamond", serif;
+                font-optical-sizing: auto;
+                font-weight: 500;
+                font-style: normal;
+            }
+
+            .inter-600 {
+                font-family: "Inter", sans-serif;
+                font-optical-sizing: auto;
+                font-weight: 600;
+                font-style: normal;
+            }
         </style>
+        <script src="./tailwind_4_0_13.js"></script>
     </head>
-    <body>
-        <h2>TRMNL New Tab Settings</h2>
+    <body class="bg-gray-100/80 dark:bg-gray-850/80">
+        <div>
+            <h2 class="eb-garamond-500">TRMNL New Tab Settings</h2>
 
-        <div class="form-group">
-            <label for="api-key">TRMNL API Key</label>
-            <input
-                type="password"
-                id="api-key"
-                placeholder="Enter your TRMNL API key"
-            />
+            <div class="form-group">
+                <label for="api-key" class="inter-600 mb-1 block"
+                    >TRMNL API Key</label
+                >
+                <input
+                    type="password"
+                    id="api-key"
+                    placeholder="Enter your TRMNL API key"
+                />
+            </div>
+
+            <div class="w-full flex justify-end">
+                <button
+                    class="cursor-pointer font-medium rounded-lg text-sm px-3 py-2 inline-flex items-center transition duration-150 justify-center shrink-0 gap-1.5 whitespace-nowrap text-white bg-primary-500 dark:bg-primary-600 hover:bg-primary-600 dark:hover:bg-primary-500 focus:outline-none ml-3"
+                >
+                    Save
+                </button>
+            </div>
+
+            <div class="status" id="status"></div>
+
+            <div class="info" style="display: none">
+                <p id="last-updated">Last updated: Never</p>
+                <p id="next-update">Next update: Never</p>
+                <p id="refresh-rate">Refresh rate: 60 seconds</p>
+            </div>
+
+            <script src="popup.js"></script>
         </div>
-
-        <div class="buttons">
-            <button id="save-settings">Save</button>
-            <!-- <button id="refresh-now">Refresh Now</button> -->
-        </div>
-
-        <div class="status" id="status"></div>
-
-        <div class="info" style="display: none">
-            <p id="last-updated">Last updated: Never</p>
-            <p id="next-update">Next update: Never</p>
-            <p id="refresh-rate">Refresh rate: 60 seconds</p>
-        </div>
-
-        <script src="popup.js"></script>
     </body>
 </html>

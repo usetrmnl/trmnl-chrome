@@ -2,7 +2,7 @@
 
 // Constants
 const API_URL = "https://usetrmnl.com/api/current_screen";
-const DEFAULT_REFRESH_RATE = 60; // seconds
+const DEFAULT_REFRESH_RATE = 30; // seconds
 
 // Initialize when extension is installed or updated
 chrome.runtime.onInstalled.addListener(async () => {
@@ -247,14 +247,9 @@ async function fetchTrmnlImage(forceRefresh = false) {
     const data = await response.json();
     console.log("TRMNL API response:", data);
 
-    // Make sure we respect the refresh rate from the API
-    let refreshRate = DEFAULT_REFRESH_RATE;
-    if (data.refresh_rate && data.refresh_rate > 0) {
-      refreshRate = data.refresh_rate;
-      console.log(`Using API refresh rate: ${refreshRate} seconds`);
-    } else {
-      console.log(`Using default refresh rate: ${refreshRate} seconds`);
-    }
+    // Use fixed 30 second refresh rate
+    const refreshRate = DEFAULT_REFRESH_RATE;
+    console.log(`Using fixed refresh rate: ${refreshRate} seconds`);
 
     // Check if the image URL has changed
     const currentImageData = storage.currentImage || {};
@@ -329,7 +324,7 @@ async function fetchTrmnlImage(forceRefresh = false) {
       nextFetch: nextFetch,
     });
 
-    // Update the refresh alarm if refresh rate changed
+    // Update the refresh alarm if needed
     if (refreshRate !== storage.refreshRate) {
       setupRefreshAlarm(refreshRate);
     }

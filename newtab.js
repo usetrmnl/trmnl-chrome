@@ -27,7 +27,29 @@ async function initNewTab() {
         ? "http://localhost:3000"
         : "https://usetrmnl.com";
 
-    // Try to fetch devices.json
+    // Try to get devices from local storage first
+    const { devices: storedDevices } =
+      await chrome.storage.local.get("devices");
+
+    // If we have devices in storage, use them
+    if (storedDevices && storedDevices.length > 0) {
+      console.log("Using devices from local storage:", storedDevices);
+
+      // Check if we have a selected device
+      const { selectedDevice } =
+        await chrome.storage.local.get("selectedDevice");
+      if (!selectedDevice) {
+        await chrome.storage.local.set({ selectedDevice: storedDevices[0] });
+      }
+
+      // Continue with normal initialization
+      setupEventListeners();
+      await loadImage();
+      return;
+    }
+
+    // If we don't have devices in storage, fetch from server
+    console.log("No devices in local storage, fetching from server");
     const response = await fetch(`${baseUrl}/devices.json`);
 
     // If unauthorized or forbidden, redirect to login
@@ -63,6 +85,7 @@ async function initNewTab() {
   } catch (error) {
     console.error("Error during initialization:", error);
     // On any error, redirect to login
+    const { environment } = await chrome.storage.local.get("environment");
     const baseUrl =
       environment === "development"
         ? "http://localhost:3000"

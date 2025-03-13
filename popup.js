@@ -29,165 +29,177 @@ async function initPopup() {
 }
 
 async function loadDevices() {
-  // Get the current environment
-  const { environment } = await chrome.storage.local.get("environment");
-  const apiUrl =
-    environment === "development"
-      ? "http://localhost:3000/devices.json"
-      : "https://usetrmnl.com/devices.json";
+  // First try to get devices from local storage
+  const { devices: storedDevices, environment } =
+    await chrome.storage.local.get(["devices", "environment"]);
 
-  try {
-    const response = await fetch(apiUrl);
-    const devices = await response.json();
+  let devices = [];
 
-    // Store devices in local storage
-    await chrome.storage.local.set({ devices });
+  // If we have devices in storage, use them first
+  if (storedDevices && storedDevices.length > 0) {
+    console.log("Using devices from local storage");
+    devices = storedDevices;
+  } else {
+    // If no devices in storage, fetch from server
+    console.log("No devices in storage, fetching from server");
+    const apiUrl =
+      environment === "development"
+        ? "http://localhost:3000/devices.json"
+        : "https://usetrmnl.com/devices.json";
 
-    const { selectedDevice } = await chrome.storage.local.get("selectedDevice");
+    try {
+      const response = await fetch(apiUrl);
+      devices = await response.json();
 
-    const deviceSelect = document.getElementById("device-select");
-    deviceSelect.innerHTML = ""; // Clear existing options
+      // Store devices in local storage for future use
+      await chrome.storage.local.set({ devices });
+    } catch (error) {
+      console.error("Error fetching devices from server:", error);
+      // If we can't fetch, ensure devices is at least an empty array
+      devices = [];
+    }
+  }
 
-    if (devices && devices.length > 0) {
-      devices.forEach((device) => {
-        const option = document.createElement("option");
-        option.value = device.api_key;
-        option.textContent = device.name;
-        option.selected =
-          selectedDevice && selectedDevice.api_key === device.api_key;
-        deviceSelect.appendChild(option);
+  const { selectedDevice } = await chrome.storage.local.get("selectedDevice");
+
+  const deviceSelect = document.getElementById("device-select");
+  deviceSelect.innerHTML = ""; // Clear existing options
+
+  if (devices && devices.length > 0) {
+    devices.forEach((device) => {
+      const option = document.createElement("option");
+      option.value = device.api_key;
+      option.textContent = device.name;
+      option.selected =
+        selectedDevice && selectedDevice.api_key === device.api_key;
+      deviceSelect.appendChild(option);
+    });
+
+    // If no device is selected, select the first one
+    if (!selectedDevice) {
+      await chrome.storage.local.set({
+        selectedDevice: devices[0],
+        apiKey: devices[0].api_key,
+      });
+      chrome.runtime.sendMessage({ action: "forceRefresh" });
+    }
+  } else {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No devices found";
+    deviceSelect.appendChild(option);
+  }
+
+  // Add change event listener
+  deviceSelect.addEventListener("change", async (e) => {
+    const selectedApiKey = e.target.value;
+    const selectedDevice = devices.find((d) => d.api_key === selectedApiKey);
+
+    if (selectedDevice) {
+      // Initial logging
+      console.log("Device change initiated:", {
+        deviceName: selectedDevice.name,
+        apiKey: selectedDevice.api_key.substring(0, 8) + "...", // Log partial key for safety
+        timestamp: new Date().toISOString(),
       });
 
-      // If no device is selected, select the first one
-      if (!selectedDevice) {
+      showStatus("Changing device...");
+
+      try {
+        // Log pre-update storage state
+        const beforeState = await chrome.storage.local.get([
+          "selectedDevice",
+          "apiKey",
+          "retryCount",
+          "retryAfter",
+          "lastFetch",
+        ]);
+        console.log("Storage state before update:", beforeState);
+
+        // Update the device in storage
         await chrome.storage.local.set({
-          selectedDevice: devices[0],
-          apiKey: devices[0].api_key,
-        });
-        chrome.runtime.sendMessage({ action: "forceRefresh" });
-      }
-    } else {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "No devices found";
-      deviceSelect.appendChild(option);
-    }
-
-    // Add change event listener
-    deviceSelect.addEventListener("change", async (e) => {
-      const selectedApiKey = e.target.value;
-      const selectedDevice = devices.find((d) => d.api_key === selectedApiKey);
-
-      if (selectedDevice) {
-        // Initial logging
-        console.log("Device change initiated:", {
-          deviceName: selectedDevice.name,
-          apiKey: selectedDevice.api_key.substring(0, 8) + "...", // Log partial key for safety
-          timestamp: new Date().toISOString(),
+          selectedDevice,
+          apiKey: selectedDevice.api_key,
+          retryCount: 0,
+          retryAfter: null,
+          lastFetch: 0,
         });
 
-        showStatus("Changing device...");
+        console.log("Storage updated with new device settings");
 
-        try {
-          // Log pre-update storage state
-          const beforeState = await chrome.storage.local.get([
-            "selectedDevice",
-            "apiKey",
-            "retryCount",
-            "retryAfter",
-            "lastFetch",
-          ]);
-          console.log("Storage state before update:", beforeState);
+        // Verify storage update
+        const afterState = await chrome.storage.local.get([
+          "selectedDevice",
+          "apiKey",
+          "retryCount",
+          "retryAfter",
+          "lastFetch",
+        ]);
+        console.log("Storage state after update:", afterState);
 
-          // Update the device in storage
-          await chrome.storage.local.set({
-            selectedDevice,
-            apiKey: selectedDevice.api_key,
-            retryCount: 0,
-            retryAfter: null,
-            lastFetch: 0,
+        // Force refresh with detailed logging
+        console.log("Initiating force refresh...");
+        chrome.runtime.sendMessage({ action: "forceRefresh" }, (response) => {
+          console.log("Force refresh response received:", {
+            response,
+            timestamp: new Date().toISOString(),
           });
 
-          console.log("Storage updated with new device settings");
-
-          // Verify storage update
-          const afterState = await chrome.storage.local.get([
-            "selectedDevice",
-            "apiKey",
-            "retryCount",
-            "retryAfter",
-            "lastFetch",
-          ]);
-          console.log("Storage state after update:", afterState);
-
-          // Force refresh with detailed logging
-          console.log("Initiating force refresh...");
-          chrome.runtime.sendMessage({ action: "forceRefresh" }, (response) => {
-            console.log("Force refresh response received:", {
+          if (response && response.success) {
+            console.log("Device change and refresh successful");
+            hideStatus();
+          } else {
+            console.warn("Initial refresh attempt unsuccessful:", {
               response,
+              error: response?.error,
               timestamp: new Date().toISOString(),
             });
 
-            if (response && response.success) {
-              console.log("Device change and refresh successful");
-              hideStatus();
-            } else {
-              console.warn("Initial refresh attempt unsuccessful:", {
-                response,
-                error: response?.error,
-                timestamp: new Date().toISOString(),
-              });
+            hideStatus();
 
-              hideStatus();
+            // Schedule retry
+            console.log("Scheduling retry refresh...");
+            setTimeout(() => {
+              console.log("Executing retry refresh...");
+              chrome.runtime.sendMessage(
+                { action: "forceRefresh" },
+                (retryResponse) => {
+                  console.log("Retry refresh response:", {
+                    response: retryResponse,
+                    timestamp: new Date().toISOString(),
+                  });
 
-              // Schedule retry
-              console.log("Scheduling retry refresh...");
-              setTimeout(() => {
-                console.log("Executing retry refresh...");
-                chrome.runtime.sendMessage(
-                  { action: "forceRefresh" },
-                  (retryResponse) => {
-                    console.log("Retry refresh response:", {
+                  if (retryResponse && retryResponse.success) {
+                    console.log("Retry refresh successful");
+                  } else {
+                    console.warn("Retry refresh unsuccessful:", {
                       response: retryResponse,
-                      timestamp: new Date().toISOString(),
+                      error: retryResponse?.error,
                     });
-
-                    if (retryResponse && retryResponse.success) {
-                      console.log("Retry refresh successful");
-                    } else {
-                      console.warn("Retry refresh unsuccessful:", {
-                        response: retryResponse,
-                        error: retryResponse?.error,
-                      });
-                    }
-                  },
-                );
-              }, 1000);
-            }
-          });
-        } catch (error) {
-          console.error("Error during device change process:", {
-            error,
-            message: error.message,
-            stack: error.stack,
-            timestamp: new Date().toISOString(),
-          });
-          showStatus("Error changing device", true);
-        }
-      } else {
-        console.warn("No device found for selected API key:", {
-          selectedApiKey: selectedApiKey
-            ? selectedApiKey.substring(0, 8) + "..."
-            : "none",
+                  }
+                },
+              );
+            }, 1000);
+          }
+        });
+      } catch (error) {
+        console.error("Error during device change process:", {
+          error,
+          message: error.message,
+          stack: error.stack,
           timestamp: new Date().toISOString(),
         });
+        showStatus("Error changing device", true);
       }
-    });
-  } catch (error) {
-    console.error("Error loading devices:", error);
-    const deviceSelect = document.getElementById("device-select");
-    deviceSelect.innerHTML = '<option value="">Error loading devices</option>';
-  }
+    } else {
+      console.warn("No device found for selected API key:", {
+        selectedApiKey: selectedApiKey
+          ? selectedApiKey.substring(0, 8) + "..."
+          : "none",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
 }
 
 // Set up event listeners

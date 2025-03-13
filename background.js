@@ -69,22 +69,36 @@ const DEFAULT_REFRESH_RATE = 30; // seconds
 
 async function fetchAndStoreDevices() {
   try {
+    // First check if we already have stored devices
+    const { devices: storedDevices } =
+      await chrome.storage.local.get("devices");
+
     const devicesUrl = await getDevicesUrl();
     const response = await fetch(devicesUrl);
 
-    // Handle unauthorized access
-    if (response.status === 401 || response.status === 403) {
+    // Only redirect to login if we have no stored devices AND got a 401/403
+    if (
+      (response.status === 401 || response.status === 403) &&
+      (!storedDevices || storedDevices.length === 0)
+    ) {
       const loginUrl = await getLoginUrl();
       // Open login page in a new tab
       chrome.tabs.create({ url: loginUrl });
-      return null;
+      return storedDevices || null;
     }
 
     if (!response.ok) {
+      // If we have stored devices, return them instead of failing
+      if (storedDevices && storedDevices.length > 0) {
+        console.log("Using stored devices due to fetch error");
+        return storedDevices;
+      }
       throw new Error(`HTTP error: ${response.status}`);
     }
 
     const devices = await response.json();
+
+    // Always save the newly fetched devices
     await chrome.storage.local.set({ devices });
 
     // If no device is selected, select the first one
@@ -96,24 +110,43 @@ async function fetchAndStoreDevices() {
     return devices;
   } catch (error) {
     console.error("Error fetching devices:", error);
-    return null;
+    // Return stored devices if available
+    const { devices: storedDevices } =
+      await chrome.storage.local.get("devices");
+    return storedDevices || null;
   }
 }
 
 // Fetch devices list and get first API key
 async function getFirstDeviceApiKey() {
   try {
+    // First check if we already have stored devices
+    const { devices: storedDevices } =
+      await chrome.storage.local.get("devices");
+
     const devicesUrl = await getDevicesUrl();
     const response = await fetch(devicesUrl);
 
-    if (response.status === 401 || response.status === 403) {
-      // User is not logged in, redirect to login page
+    // Only redirect to login if we have no stored devices AND got a 401/403
+    if (
+      (response.status === 401 || response.status === 403) &&
+      (!storedDevices || storedDevices.length === 0)
+    ) {
       const loginUrl = await getLoginUrl();
       chrome.tabs.create({ url: loginUrl });
       return null;
     }
 
     if (!response.ok) {
+      // If we have stored devices, use them instead of failing
+      if (storedDevices && storedDevices.length > 0) {
+        console.log("Using stored devices due to fetch error");
+        await chrome.storage.local.set({
+          selectedDevice: storedDevices[0],
+          environment: "production",
+        });
+        return storedDevices[0].api_key;
+      }
       throw new Error(`HTTP error: ${response.status}`);
     }
 
@@ -127,9 +160,21 @@ async function getFirstDeviceApiKey() {
       });
       return devices[0].api_key;
     }
+
+    // If no devices found in response but we have stored devices, use those
+    if (storedDevices && storedDevices.length > 0) {
+      return storedDevices[0].api_key;
+    }
+
     return null;
   } catch (error) {
     console.error("Error fetching devices:", error);
+    // Check for stored devices
+    const { devices: storedDevices } =
+      await chrome.storage.local.get("devices");
+    if (storedDevices && storedDevices.length > 0) {
+      return storedDevices[0].api_key;
+    }
     return null;
   }
 }
@@ -339,6 +384,22 @@ async function fetchTrmnlImage(forceRefresh = false) {
       },
     });
 
+    // Handle unauthorized (redirect to login only if we have no devices)
+    if (response.status === 401 || response.status === 403) {
+      const { devices } = await chrome.storage.local.get("devices");
+      if (!devices || devices.length === 0) {
+        const loginUrl = await getLoginUrl();
+        chrome.tabs.create({ url: loginUrl });
+        fetchInProgress = false;
+        return null;
+      } else {
+        console.log(
+          "API key unauthorized, but have stored devices. Will retry with another key.",
+        );
+        // Could implement logic here to try the next device
+      }
+    }
+
     // Handle rate limiting (429)
     if (response.status === 429) {
       console.warn("Rate limited by the API (429)");
@@ -369,6 +430,7 @@ async function fetchTrmnlImage(forceRefresh = false) {
         when: retryTime,
       });
 
+      fetchInProgress = false;
       return null;
     }
 
@@ -411,6 +473,7 @@ async function fetchTrmnlImage(forceRefresh = false) {
         setupRefreshAlarm(refreshRate);
       }
 
+      fetchInProgress = false;
       return currentImageData.url;
     }
 

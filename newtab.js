@@ -19,17 +19,20 @@ let countdownIntervalId = null;
 
 // Initialize the new tab page
 async function initNewTab() {
+  const storage = await chrome.storage.local.get(["apiKey", "environment"]);
+
+  if (!storage.apiKey) {
+    const environment = storage.environment || "production";
+    const baseUrl =
+      environment === "development"
+        ? "http://localhost:3000"
+        : "https://usetrmnl.com";
+    window.location.href = `${baseUrl}/login`;
+    return;
+  }
+
   setupEventListeners();
   await loadImage();
-
-  // Show info overlay when hovering on the bottom of the screen
-  // document.addEventListener("mousemove", (e) => {
-  //   if (e.clientY > window.innerHeight - 100) {
-  //     infoOverlay.classList.remove("hidden");
-  //   } else {
-  //     infoOverlay.classList.add("hidden");
-  //   }
-  // });
 }
 
 // Set up event listeners
@@ -74,6 +77,7 @@ function setupEventListeners() {
 // Load the image from storage
 async function loadImage() {
   loadingElement.classList.remove("hidden");
+  imageElement.classList.add("hidden"); // Hide the image while loading
 
   chrome.runtime.sendMessage({ action: "getCurrentImage" }, (response) => {
     if (!response || !response.currentImage) {
@@ -84,21 +88,24 @@ async function loadImage() {
     // Hide error container if it was showing
     errorContainer.classList.add("hidden");
 
-    // Display the image
-    // The image is now stored as a data URL
-    imageElement.src = response.currentImage.url;
-    imageElement.onload = () => {
+    // Create a new image element to force a reload
+    const newImage = new Image();
+    newImage.onload = () => {
+      // Update the src of the actual image element
+      imageElement.src = newImage.src;
       loadingElement.classList.add("hidden");
       imageElement.classList.remove("hidden");
     };
 
-    // Handle loading errors
-    imageElement.onerror = () => {
+    newImage.onerror = () => {
       console.error("Error loading image data URL");
       loadingElement.textContent = "Error loading image";
       // Request a fresh image
       chrome.runtime.sendMessage({ action: "forceRefresh" });
     };
+
+    // Add a cache-busting parameter to force reload
+    newImage.src = `${response.currentImage.url}#t=${Date.now()}`;
 
     // Update next refresh info
     updateRefreshTimer(response.nextFetch);

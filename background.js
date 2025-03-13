@@ -1,64 +1,168 @@
 // Background script for TRMNL New Tab Display extension
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "saveApiKey") {
+    saveApiKey(request.apiKey)
+      .then(() => {
+        if (sendResponse) sendResponse({ success: true });
+      })
+      .catch((err) => {
+        console.error("Error saving API key:", err);
+        if (sendResponse) sendResponse({ success: false, error: err.message });
+      });
+    return true;
+  } else if (request.action === "getCurrentImage") {
+    sendCurrentImage(sendResponse);
+    return true;
+  } else if (request.action === "forceRefresh") {
+    fetchTrmnlImage(true)
+      .then((result) => {
+        if (sendResponse) sendResponse({ success: !!result });
+      })
+      .catch((err) => {
+        console.error("Error during forced refresh:", err);
+        if (sendResponse) sendResponse({ success: false, error: err.message });
+      });
+    return true;
+  }
+  return false;
+});
+
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (changes.environment) {
+    console.log("Environment changed:", {
+      oldValue: changes.environment.oldValue,
+      newValue: changes.environment.newValue,
+    });
+  }
+});
+
 // Constants
-const API_URL = "https://usetrmnl.com/api/current_screen";
+const HOSTS = {
+  development: "http://localhost:3000",
+  production: "https://usetrmnl.com",
+};
+
+const getBaseUrl = async () => {
+  const { environment } = await chrome.storage.local.get("environment");
+  return HOSTS[environment] || HOSTS.production;
+};
+
+const getDevicesUrl = async () => {
+  const baseUrl = await getBaseUrl();
+  return `${baseUrl}/devices.json`;
+};
+
+let API_URL = `${HOSTS.production}/api/current_screen`; // Default to production
+
+const getApiUrl = async () => {
+  const baseUrl = await getBaseUrl();
+  return `${baseUrl}/api/current_screen`;
+};
+
+const getLoginUrl = async () => {
+  const baseUrl = await getBaseUrl();
+  return `${baseUrl}/login`;
+};
+
 const DEFAULT_REFRESH_RATE = 30; // seconds
+
+async function fetchAndStoreDevices() {
+  try {
+    const devicesUrl = await getDevicesUrl();
+    const response = await fetch(devicesUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const devices = await response.json();
+    await chrome.storage.local.set({ devices });
+
+    // If no device is selected, select the first one
+    const { selectedDevice } = await chrome.storage.local.get("selectedDevice");
+    if (!selectedDevice && devices.length > 0) {
+      await chrome.storage.local.set({ selectedDevice: devices[0] });
+    }
+
+    return devices;
+  } catch (error) {
+    console.error("Error fetching devices:", error);
+    return null;
+  }
+}
+
+// Fetch devices list and get first API key
+async function getFirstDeviceApiKey() {
+  try {
+    const devicesUrl = await getDevicesUrl();
+    const response = await fetch(devicesUrl);
+
+    if (response.status === 401 || response.status === 403) {
+      // User is not logged in, redirect to login page
+      const loginUrl = await getLoginUrl();
+      chrome.tabs.create({ url: loginUrl });
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const devices = await response.json();
+    if (devices && devices.length > 0) {
+      // Store the devices
+      await chrome.storage.local.set({
+        devices,
+        selectedDevice: devices[0],
+        environment: "production",
+      });
+      return devices[0].api_key;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching devices:", error);
+    return null;
+  }
+}
+
+// Send the current image to the requester
+async function sendCurrentImage(sendResponse) {
+  const storage = await chrome.storage.local.get([
+    "currentImage",
+    "lastFetch",
+    "refreshRate",
+  ]);
+  sendResponse(storage);
+}
 
 // Initialize when extension is installed or updated
 chrome.runtime.onInstalled.addListener(async () => {
   console.log("TRMNL New Tab Display extension installed");
 
-  // Initialize storage with default values if not already set
-  const storage = await chrome.storage.local.get([
-    "apiKey",
-    "lastFetch",
-    "currentImage",
-    "refreshRate",
-    "nextFetch",
-    "retryCount",
-    "retryAfter",
-  ]);
+  // Set default environment and get devices
+  await chrome.storage.local.set({ environment: "production" });
+  API_URL = await getApiUrl();
 
-  // Initialize or reset values as needed
-  const initialValues = {};
+  const devices = await fetchAndStoreDevices();
 
-  if (!storage.apiKey) {
-    initialValues.apiKey = "";
-  }
+  if (devices && devices.length > 0) {
+    // Set the first device and its API key
+    await chrome.storage.local.set({
+      selectedDevice: devices[0],
+      lastFetch: 0,
+      nextFetch: 0,
+      refreshRate: DEFAULT_REFRESH_RATE,
+      retryCount: 0,
+      retryAfter: null,
+    });
 
-  if (!storage.refreshRate) {
-    initialValues.refreshRate = DEFAULT_REFRESH_RATE;
-  }
-
-  if (!storage.lastFetch) {
-    initialValues.lastFetch = 0;
-  }
-
-  if (!storage.nextFetch) {
-    initialValues.nextFetch = 0;
-  }
-
-  // Reset retry information
-  initialValues.retryCount = 0;
-  initialValues.retryAfter = null;
-
-  if (Object.keys(initialValues).length > 0) {
-    await chrome.storage.local.set(initialValues);
-  }
-
-  // Check if we have a stored image data URL
-  if (storage.currentImage && storage.currentImage.url) {
-    // No need to validate data URLs as they're stored directly in chrome.storage
-    console.log("Found stored image data");
-  }
-
-  // Attempt to fetch an image if API key is already set
-  if (storage.apiKey) {
+    // Attempt to fetch an image with the device's API key
     fetchTrmnlImage();
   }
 
   // Set up alarm for periodic image fetching
-  setupRefreshAlarm(storage.refreshRate || DEFAULT_REFRESH_RATE);
+  setupRefreshAlarm(DEFAULT_REFRESH_RATE);
 });
 
 // Listen for alarms to trigger image refresh
@@ -87,7 +191,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendCurrentImage(sendResponse);
     return true; // Required for async response
   } else if (request.action === "forceRefresh") {
-    fetchTrmnlImage(true)
+    fetchTrmnlImage(true) // Pass true to force a refresh regardless of cache
       .then((result) => {
         if (sendResponse) sendResponse({ success: !!result });
       })
@@ -95,7 +199,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.error("Error during forced refresh:", err);
         if (sendResponse) sendResponse({ success: false, error: err.message });
       });
-    return true; // Required for async response
+    return true; // Important for async response
   }
 
   return false; // Not handling this message
@@ -144,22 +248,21 @@ async function checkStorageUsage() {
   return percentUsed > 80;
 }
 
-// Send the current image to the requester
-async function sendCurrentImage(sendResponse) {
-  const storage = await chrome.storage.local.get([
-    "currentImage",
-    "lastFetch",
-    "refreshRate",
-  ]);
-  sendResponse(storage);
-}
-
 // Fetch an image from the TRMNL API
 async function fetchTrmnlImage(forceRefresh = false) {
   console.log("Fetching TRMNL image");
 
+  // Get the current API URL and initialize environment if needed
+  const environment = await chrome.storage.local.get("environment");
+  if (!environment.environment) {
+    await chrome.storage.local.set({ environment: "production" });
+  }
+  API_URL = await getApiUrl();
+
+  console.log("Fetching TRMNL image");
+
   const storage = await chrome.storage.local.get([
-    "apiKey",
+    "selectedDevice",
     "lastFetch",
     "refreshRate",
     "nextFetch",
@@ -167,12 +270,19 @@ async function fetchTrmnlImage(forceRefresh = false) {
     "retryAfter",
   ]);
 
-  const apiKey = storage.apiKey;
+  const apiKey = storage.selectedDevice?.api_key;
+
   const currentTime = Date.now();
 
-  // Don't proceed if API key is not set
+  // If no API key, try to get one from devices first
   if (!apiKey) {
-    console.log("API key not set, skipping fetch");
+    console.log("No API key set, attempting to fetch from devices");
+    const deviceApiKey = await getFirstDeviceApiKey();
+    if (deviceApiKey) {
+      await saveApiKey(deviceApiKey);
+      return fetchTrmnlImage(true);
+    }
+    console.log("Could not get API key from devices, skipping fetch");
     return null;
   }
 
@@ -180,14 +290,6 @@ async function fetchTrmnlImage(forceRefresh = false) {
   if (storage.retryAfter && currentTime < storage.retryAfter) {
     console.log(
       `In retry backoff period. Next attempt in ${Math.ceil((storage.retryAfter - currentTime) / 1000)}s`,
-    );
-    return null;
-  }
-
-  // Check if it's time to refresh yet, unless we're forcing a refresh
-  if (!forceRefresh && storage.nextFetch && currentTime < storage.nextFetch) {
-    console.log(
-      `Too early to refresh. Next fetch in ${Math.ceil((storage.nextFetch - currentTime) / 1000)}s`,
     );
     return null;
   }

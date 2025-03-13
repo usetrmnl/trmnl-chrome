@@ -9,6 +9,12 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://usetrmnl.com/*", "http://localhost:3000/*"],
+      "js": ["dashboard-content.js"]
+    }
+  ],
   "background": {
     "service_worker": "background.js"
   },

@@ -72,6 +72,14 @@ async function fetchAndStoreDevices() {
     const devicesUrl = await getDevicesUrl();
     const response = await fetch(devicesUrl);
 
+    // Handle unauthorized access
+    if (response.status === 401 || response.status === 403) {
+      const loginUrl = await getLoginUrl();
+      // Open login page in a new tab
+      chrome.tabs.create({ url: loginUrl });
+      return null;
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
@@ -202,6 +210,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // Important for async response
   }
 
+  if (request.action === "refreshDevices") {
+    fetchAndStoreDevices()
+      .then((devices) => {
+        if (devices && devices.length > 0) {
+          // Refresh the current image with the new device info
+          return fetchTrmnlImage(true);
+        }
+      })
+      .then(() => {
+        if (sendResponse) sendResponse({ success: true });
+      })
+      .catch((error) => {
+        console.error("Error refreshing devices:", error);
+        if (sendResponse)
+          sendResponse({ success: false, error: error.message });
+      });
+    return true;
+  }
+
   return false; // Not handling this message
 });
 
@@ -248,9 +275,19 @@ async function checkStorageUsage() {
   return percentUsed > 80;
 }
 
+let fetchInProgress = false;
+
 // Fetch an image from the TRMNL API
 async function fetchTrmnlImage(forceRefresh = false) {
   console.log("Fetching TRMNL image");
+
+  // Prevent concurrent fetches
+  if (fetchInProgress) {
+    console.log("Fetch already in progress, skipping");
+    return null;
+  }
+
+  fetchInProgress = true;
 
   // Get the current API URL and initialize environment if needed
   const environment = await chrome.storage.local.get("environment");
@@ -441,6 +478,10 @@ async function fetchTrmnlImage(forceRefresh = false) {
       // Ignore message sending errors, which are expected if no tabs are open
     }
 
+    setTimeout(() => {
+      fetchInProgress = false;
+    }, 1000);
+
     return imageDataUrl;
   } catch (error) {
     console.error("Error fetching TRMNL image:", error);
@@ -460,6 +501,8 @@ async function fetchTrmnlImage(forceRefresh = false) {
     });
 
     console.log(`Scheduled retry in ${retryDelay / 1000} seconds`);
+    fetchInProgress = false;
+
     return null;
   }
 }

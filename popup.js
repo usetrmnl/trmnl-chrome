@@ -79,39 +79,108 @@ async function loadDevices() {
       const selectedDevice = devices.find((d) => d.api_key === selectedApiKey);
 
       if (selectedDevice) {
-        // Show status immediately
+        // Initial logging
+        console.log("Device change initiated:", {
+          deviceName: selectedDevice.name,
+          apiKey: selectedDevice.api_key.substring(0, 8) + "...", // Log partial key for safety
+          timestamp: new Date().toISOString(),
+        });
+
         showStatus("Changing device...");
 
         try {
+          // Log pre-update storage state
+          const beforeState = await chrome.storage.local.get([
+            "selectedDevice",
+            "apiKey",
+            "retryCount",
+            "retryAfter",
+            "lastFetch",
+          ]);
+          console.log("Storage state before update:", beforeState);
+
           // Update the device in storage
           await chrome.storage.local.set({
             selectedDevice,
             apiKey: selectedDevice.api_key,
-            // Reset any retry information when changing device
             retryCount: 0,
             retryAfter: null,
-            // Force a refresh by resetting the lastFetch time
             lastFetch: 0,
           });
 
-          // Force refresh with a callback to verify it worked
+          console.log("Storage updated with new device settings");
+
+          // Verify storage update
+          const afterState = await chrome.storage.local.get([
+            "selectedDevice",
+            "apiKey",
+            "retryCount",
+            "retryAfter",
+            "lastFetch",
+          ]);
+          console.log("Storage state after update:", afterState);
+
+          // Force refresh with detailed logging
+          console.log("Initiating force refresh...");
           chrome.runtime.sendMessage({ action: "forceRefresh" }, (response) => {
+            console.log("Force refresh response received:", {
+              response,
+              timestamp: new Date().toISOString(),
+            });
+
             if (response && response.success) {
-              // showStatus("Device changed and image refreshed");
+              console.log("Device change and refresh successful");
               hideStatus();
             } else {
+              console.warn("Initial refresh attempt unsuccessful:", {
+                response,
+                error: response?.error,
+                timestamp: new Date().toISOString(),
+              });
+
               hideStatus();
-              // showStatus("Device changed but refresh failed, retrying...");
-              // Try again after a short delay
+
+              // Schedule retry
+              console.log("Scheduling retry refresh...");
               setTimeout(() => {
-                chrome.runtime.sendMessage({ action: "forceRefresh" });
+                console.log("Executing retry refresh...");
+                chrome.runtime.sendMessage(
+                  { action: "forceRefresh" },
+                  (retryResponse) => {
+                    console.log("Retry refresh response:", {
+                      response: retryResponse,
+                      timestamp: new Date().toISOString(),
+                    });
+
+                    if (retryResponse && retryResponse.success) {
+                      console.log("Retry refresh successful");
+                    } else {
+                      console.warn("Retry refresh unsuccessful:", {
+                        response: retryResponse,
+                        error: retryResponse?.error,
+                      });
+                    }
+                  },
+                );
               }, 1000);
             }
           });
         } catch (error) {
-          console.error("Error changing device:", error);
+          console.error("Error during device change process:", {
+            error,
+            message: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString(),
+          });
           showStatus("Error changing device", true);
         }
+      } else {
+        console.warn("No device found for selected API key:", {
+          selectedApiKey: selectedApiKey
+            ? selectedApiKey.substring(0, 8) + "..."
+            : "none",
+          timestamp: new Date().toISOString(),
+        });
       }
     });
   } catch (error) {

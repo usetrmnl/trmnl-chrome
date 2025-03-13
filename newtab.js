@@ -19,20 +19,56 @@ let countdownIntervalId = null;
 
 // Initialize the new tab page
 async function initNewTab() {
-  const storage = await chrome.storage.local.get(["apiKey", "environment"]);
+  try {
+    // First try to get the environment setting
+    const { environment } = await chrome.storage.local.get("environment");
+    const baseUrl =
+      environment === "development"
+        ? "http://localhost:3000"
+        : "https://usetrmnl.com";
 
-  if (!storage.apiKey) {
-    const environment = storage.environment || "production";
+    // Try to fetch devices.json
+    const response = await fetch(`${baseUrl}/devices.json`);
+
+    // If unauthorized or forbidden, redirect to login
+    if (response.status === 401 || response.status === 403) {
+      window.location.href = `${baseUrl}/login`;
+      return;
+    }
+
+    // If response is not OK for any other reason
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // If we get here, we have the devices, proceed with normal initialization
+    const devices = await response.json();
+
+    if (!devices || devices.length === 0) {
+      // No devices available, redirect to login
+      window.location.href = `${baseUrl}/login`;
+      return;
+    }
+
+    // Store devices and selected device if not already set
+    await chrome.storage.local.set({ devices });
+    const { selectedDevice } = await chrome.storage.local.get("selectedDevice");
+    if (!selectedDevice) {
+      await chrome.storage.local.set({ selectedDevice: devices[0] });
+    }
+
+    // Continue with normal initialization
+    setupEventListeners();
+    await loadImage();
+  } catch (error) {
+    console.error("Error during initialization:", error);
+    // On any error, redirect to login
     const baseUrl =
       environment === "development"
         ? "http://localhost:3000"
         : "https://usetrmnl.com";
     window.location.href = `${baseUrl}/login`;
-    return;
   }
-
-  setupEventListeners();
-  await loadImage();
 }
 
 // Set up event listeners
@@ -81,6 +117,8 @@ async function loadImage() {
 
   chrome.runtime.sendMessage({ action: "getCurrentImage" }, (response) => {
     if (!response || !response.currentImage) {
+      errorContainer.querySelector("p").textContent =
+        "Please select a TRMNL device to view images.";
       showApiKeyPrompt();
       return;
     }

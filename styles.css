@@ -143,22 +143,6 @@ html {
     font-size: 16px;
 }
 
-button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    background-color: rgb(248, 101, 75);
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-button:hover {
-    background-color: #ffffff;
-    color: rgb(248, 101, 75);
-}
-
 .hidden {
     display: none !important;
 }

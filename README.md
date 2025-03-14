@@ -5,13 +5,8 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 ## Features
 
 - Displays TRMNL images in new tab pages
-- Automatic image refresh at configurable intervals
-- Manual refresh option
-- Countdown timer showing time until next refresh
-- Info overlay with controls on hover
-- Settings popup for API key management
-- Error handling and retry logic for failed API requests
-- API key storage
+- Automatic image refresh
+- Ability to select which device to display (if you have multiple devices)
 
 ## Installation
 
@@ -22,20 +17,12 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 
 ## Setup
 
-1. Get your TRMNL API key from [TRMNL Dashboard](https://usetrmnl.com/dashboard)
-2. Click the TRMNL extension icon in Chrome to open settings
-3. Enter your API key and click Save
-4. Open a new tab to start seeing TRMNL images
+1. You will be prompted to login to your TRMNL account (if you haven't already)
+2. Open a new tab and the current screen on your device will be displayed
 
 ## Usage
 
 - Open a new tab to see the current TRMNL image
-- Hover near the bottom of the screen to show controls
-- Click "Refresh Now" to manually fetch a new image
-- Click "Settings" to update your API key or check status
-- The countdown timer shows when the next automatic refresh will occur
-- Image refresh intervals are synced with server recommendations
-- Automatic backoff is applied when rate limits are hit (429 responses)
 
 ## Development
 
@@ -50,7 +37,10 @@ Key files:
 - `manifest.json` - Extension configuration
 - `newtab.js/.html` - New tab page implementation
 - `popup.js/.html` - Settings popup implementation
-- `background.js` - Background service worker
+- `background.js` - Background service worker for core functionality
+- `dashboard-content.js` - Content script that runs on the dashboard page
+- `devtools.js` - DevTools panel integration
+- `panel.js/.html` - DevTools panel implementation
 - `styles.css` - Styling for new tab and popup
 
 ## Contributing

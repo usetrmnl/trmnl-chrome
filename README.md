@@ -10,7 +10,7 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 
 ## Installation
 
-1. Clone this repository or download the source code
+1. Clone this repository (`git clone git@github.com:usetrmnl/trmnl-chrome.git`) or [download the source code](https://github.com/usetrmnl/trmnl-chrome/archive/refs/heads/main.zip)
 2. Open Chrome and navigate to `chrome://extensions`
 3. Enable "Developer mode" in the top right corner
 4. Click "Load unpacked" and select the extension directory
@@ -27,7 +27,6 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 ## Development
 
 The extension is built with:
-
 - Vanilla JavaScript
 - Chrome Extension APIs
 - HTML/CSS

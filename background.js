@@ -1,33 +1,5 @@
 // Background script for TRMNL New Tab Display extension
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "saveApiKey") {
-    saveApiKey(request.apiKey)
-      .then(() => {
-        if (sendResponse) sendResponse({ success: true });
-      })
-      .catch((err) => {
-        console.error("Error saving API key:", err);
-        if (sendResponse) sendResponse({ success: false, error: err.message });
-      });
-    return true;
-  } else if (request.action === "getCurrentImage") {
-    sendCurrentImage(sendResponse);
-    return true;
-  } else if (request.action === "forceRefresh") {
-    fetchTrmnlImage(true)
-      .then((result) => {
-        if (sendResponse) sendResponse({ success: !!result });
-      })
-      .catch((err) => {
-        console.error("Error during forced refresh:", err);
-        if (sendResponse) sendResponse({ success: false, error: err.message });
-      });
-    return true;
-  }
-  return false;
-});
-
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (changes.environment) {
     console.log("Environment changed:", {

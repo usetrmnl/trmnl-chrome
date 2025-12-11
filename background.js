@@ -350,6 +350,7 @@ async function fetchTrmnlImage(forceRefresh = false) {
     "nextFetch",
     "retryCount",
     "retryAfter",
+    "currentImage",
   ]);
 
   const apiKey = storage.selectedDevice?.api_key;

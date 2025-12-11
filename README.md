@@ -10,10 +10,19 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 
 ## Installation
 
-1. Clone this repository (`git clone git@github.com:usetrmnl/trmnl-chrome.git`) or [download the source code](https://github.com/usetrmnl/trmnl-chrome/archive/refs/heads/main.zip)
+Google Chrome:
+
+1. Clone this repository (`git clone git@github.com:usetrmnl/trmnl-chrome.git`)
 2. Open Chrome and navigate to `chrome://extensions`
 3. Enable "Developer mode" in the top right corner
 4. Click "Load unpacked" and select the extension directory
+
+Firefox:
+
+1. Clone this repository (`git clone git@github.com:usetrmnl/trmnl-chrome.git`)
+2. Open Firefox and navigate to `about:addons`
+3. Click the gear cog icon in the top right corner and select "Debug add-ons"
+4. Click "Load Temporary Add-on..." and select the `manifest.json` file inside the extension directory
 
 ## Setup
 

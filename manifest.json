@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TRMNL New Tab Display",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Displays images from TRMNL API on new tab pages",
   "permissions": ["storage", "alarms"],
   "host_permissions": ["http://localhost:3000/*", "https://usetrmnl.com/*"],

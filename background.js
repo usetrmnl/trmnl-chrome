@@ -279,17 +279,21 @@ function setupRefreshAlarm(seconds) {
 // Handle storage limits for data URLs
 // Chrome storage has limits, so we need to be careful with large data URLs
 async function checkStorageUsage() {
-  // Get current storage usage
-  const storageUsage = await chrome.storage.local.getBytesInUse(null);
-  const storageLimit = chrome.storage.local.QUOTA_BYTES || 10485760; // 10MB default
+  // Firefox does not support this method
+  if (chrome?.storage?.local?.getBytesInUse) {
+    // Get current storage usage
+    const storageUsage = await chrome.storage.local.getBytesInUse(null);
+    const storageLimit = chrome.storage.local.QUOTA_BYTES || 10485760; // 10MB default
 
-  const percentUsed = (storageUsage / storageLimit) * 100;
-  console.log(
-    `Storage usage: ${(storageUsage / 1024 / 1024).toFixed(2)}MB / ${(storageLimit / 1024 / 1024).toFixed(2)}MB (${percentUsed.toFixed(2)}%)`,
-  );
+    const percentUsed = (storageUsage / storageLimit) * 100;
+    console.log(
+      `Storage usage: ${(storageUsage / 1024 / 1024).toFixed(2)}MB / ${(storageLimit / 1024 / 1024).toFixed(2)}MB (${percentUsed.toFixed(2)}%)`,
+    );
 
-  // If we're using more than 80% of our quota, we might want to clean up old images
-  return percentUsed > 80;
+    // If we're using more than 80% of our quota, we might want to clean up old images
+    return percentUsed > 80;
+  }
+  return false; // Assume no storage limits if method is not available
 }
 
 let fetchInProgress = false;

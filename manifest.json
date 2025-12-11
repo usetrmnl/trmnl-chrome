@@ -16,6 +16,7 @@
     }
   ],
   "background": {
+    "scripts": ["background.js"],
     "service_worker": "background.js"
   },
   "action": {
@@ -30,5 +31,10 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{fa015ea5-5b74-40d8-b4d5-75f5f0edbfda}"
+    }
   }
 }

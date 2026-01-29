@@ -25,6 +25,7 @@ async function initPopup() {
   setupEventListeners();
   await loadSettings();
   await loadDevices();
+  await loadStyles();
   updateStatusInfo();
 }
 
@@ -45,7 +46,7 @@ async function loadDevices() {
     const apiUrl =
       environment === "development"
         ? "http://localhost:3000/devices.json"
-        : "https://usetrmnl.com/devices.json";
+        : "https://trmnl.com/devices.json";
 
     try {
       const response = await fetch(apiUrl);
@@ -202,6 +203,33 @@ async function loadDevices() {
   });
 }
 
+// Load display styles from storage
+async function loadStyles() {
+  const setStyle = async (key, value) => {
+    const storage = await chrome.storage.local.get(["displayStyles"]);
+    const styles = storage.displayStyles || {};
+    styles[key] = value;
+    await chrome.storage.local.set({ displayStyles: styles });
+    await chrome.runtime.sendMessage({ action: "reloadStyles" });
+
+    showStatus("Settings saved");
+  }
+
+  const { displayStyles } = await chrome.storage.local.get("displayStyles");
+
+  const uiSelect = document.getElementById("ui-style-select");
+  uiSelect.addEventListener("change", async (e) => setStyle("uiStyle", e.target.value));
+  uiSelect.value = displayStyles?.uiStyle || "auto";
+  
+  const screenSelect = document.getElementById("screen-style-select");
+  screenSelect.addEventListener("change", async (e) => setStyle("screenStyle", e.target.value));
+  screenSelect.value = displayStyles?.screenStyle || "auto-system";
+
+  const dimmingSelect = document.getElementById("dimming-style-select");
+  dimmingSelect.addEventListener("change", async (e) => setStyle("dimmingStyle", e.target.value));
+  dimmingSelect.value = displayStyles?.dimmingStyle || "until-hover";
+}
+
 // Set up event listeners
 function setupEventListeners() {
   // Save button
@@ -245,7 +273,6 @@ async function saveSettings() {
     });
 
     showStatus("Settings saved");
-    setTimeout(hideStatus, 3000);
   } else {
     showStatus("API key cannot be empty", true);
   }
@@ -264,7 +291,6 @@ function refreshImage() {
 
     setTimeout(() => {
       updateStatusInfo();
-      hideStatus();
     }, 3000);
   });
 }
@@ -310,11 +336,19 @@ async function updateStatusInfo() {
 }
 
 // Show a status message
+let statusTimeoutId;
 function showStatus(message, isError = false) {
   if (statusElement) {
     statusElement.textContent = message;
     statusElement.style.color = isError ? "#ff5555" : "#55ff55";
   }
+
+  if (statusTimeoutId) {
+    clearTimeout(statusTimeoutId);
+  }
+
+  if(!isError)
+    statusTimeoutId = setTimeout(hideStatus, 3000);
 }
 
 // Hide the status message

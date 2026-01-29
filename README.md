@@ -1,6 +1,6 @@
 # TRMNL Chrome Extension
 
-A Chrome extension that displays images from TRMNL's API in your new tab page with automatic refresh functionality. **Note**: requires a TRMNL account with a physical device or [BYOD](https://shop.usetrmnl.com/products/byod) license.
+A Chrome extension that displays images from TRMNL's API in your new tab page with automatic refresh functionality. **Note**: requires a TRMNL account with a physical device or [BYOD](https://shop.trmnl.com/products/byod) license.
 
 ## Features
 

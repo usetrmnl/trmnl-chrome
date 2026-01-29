@@ -23,7 +23,7 @@ async function setDevelopmentEnvironment() {
 async function setProductionEnvironment() {
   try {
     await chrome.storage.local.set({ environment: "production" });
-    console.log("Set to production environment (usetrmnl.com)");
+    console.log("Set to production environment (trmnl.com)");
     await updateEnvironmentDisplay();
   } catch (error) {
     console.error("Error setting production:", error);

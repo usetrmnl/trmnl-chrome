@@ -12,7 +12,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 // Constants
 const HOSTS = {
   development: "http://localhost:3000",
-  production: "https://usetrmnl.com",
+  production: "https://trmnl.com",
 };
 
 const getBaseUrl = async () => {

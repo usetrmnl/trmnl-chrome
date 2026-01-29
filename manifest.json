@@ -1,17 +1,17 @@
 {
   "manifest_version": 3,
   "name": "TRMNL New Tab Display",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Displays images from TRMNL API on new tab pages",
   "permissions": ["storage", "alarms"],
-  "host_permissions": ["http://localhost:3000/*", "https://usetrmnl.com/*"],
+  "host_permissions": ["http://localhost:3000/*", "https://trmnl.com/*"],
   "devtools_page": "devtools.html",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
   "content_scripts": [
     {
-      "matches": ["https://usetrmnl.com/*", "http://localhost:3000/*"],
+      "matches": ["https://trmnl.com/*", "http://localhost:3000/*"],
       "js": ["dashboard-content.js"]
     }
   ],

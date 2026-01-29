@@ -1,0 +1,54 @@
+/* User interface style variables */
+.style-ui--auto, .style-ui--light {
+    --ui-bg-color: #f0f0f0;
+    --ui-shadow-color: black;
+}
+
+.style-ui--dark {
+    --ui-bg-color: rgb(15 15 15);
+    --ui-shadow-color: #BBB; /* this is counter-intuitive but we invert() with a filter later */
+}
+
+@media (prefers-color-scheme: dark) {
+    .style-ui--auto {
+        --ui-bg-color: rgb(15 15 15);
+        --ui-shadow-color: #BBB; /* this is counter-intuitive but we invert() with a filter later */
+    }
+}
+
+/* Screen style variables */
+.style-screen--auto-system, .style-screen--light {
+    --screen-dim-filter:  sepia(20%) contrast(0.9);
+    --screen-full-filter: sepia(10%) contrast(1);
+}
+
+.style-screen--dark {
+    --screen-dim-filter:  invert() brightness(0.65) sepia(45%) contrast(0.75);
+    --screen-full-filter: invert() brightness(0.9)  sepia(55%) contrast(0.75);
+}
+
+@media (prefers-color-scheme: dark) {
+    .style-screen--auto-system {
+        --screen-dim-filter:  invert() brightness(0.65) sepia(45%) contrast(0.75);
+        --screen-full-filter: invert() brightness(0.9)  sepia(55%) contrast(0.75);
+    }
+}
+
+/* Dimming style variables */
+.style-dimming--yes {
+    --screen-filter:       var(--screen-dim-filter);
+    --screen-hover-filter: var(--screen-dim-filter);
+    --screen-transition:   none;
+}
+
+.style-dimming--no {
+    --screen-filter:       var(--screen-full-filter);
+    --screen-hover-filter: var(--screen-full-filter);
+    --screen-transition:   none;
+}
+
+.style-dimming--until-hover {
+    --screen-filter:       var(--screen-dim-filter);
+    --screen-hover-filter: var(--screen-full-filter);
+    --screen-transition:   filter 0.2s ease-in-out;
+}

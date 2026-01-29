@@ -26,25 +26,17 @@ html {
     position: relative;
 }
 
+.css-transitions-only-after-page-load * {
+   transition: none !important;
+}
+
 #image-container img {
-    filter: sepia(20%) contrast(0.9);
-    transition: filter 0.2s ease-in-out;
+    filter: var(--screen-filter, none);
+    transition: var(--screen-transition, none);
 }
 
 #image-container img:hover {
-    filter: sepia(10%) contrast(1);
-}
-
-@media (prefers-color-scheme: dark) {
-    #image-container img {
-        filter: invert() brightness(0.65) sepia(45%) contrast(0.75);
-        box-shadow: none !important;
-    }
-
-    #image-container img:hover {
-        filter: invert() brightness(0.9) sepia(55%) contrast(0.75);
-        box-shadow: none !important;
-    }
+    filter: var(--screen-hover-filter, none);
 }
 
 #trmnl-image {
@@ -162,22 +154,22 @@ html {
     font-style: normal;
 }
 
-@media (prefers-color-scheme: dark) {
-    .dark\:bg-gray-850 {
-        background-color: rgb(15 15 15);
-    }
-}
-
 .w-\[802px\] {
     width: 802px;
 }
 
 .bg-trmnl {
-    background-color: #f0f0f0;
+    background-color: var(--ui-bg-color);
 }
 
-@media (prefers-color-scheme: dark) {
-    .bg-trmnl {
-        background-color: rgb(15 15 15);
-    }
+.dark\:bg-gray-850 {
+    background-color: var(--ui-bg-color);
+}
+
+.bg-trmnl {
+    background-color: var(--ui-bg-color);
+}
+
+.dark\:shadow-black {
+    --tw-shadow-color: var(--ui-shadow-color);
 }

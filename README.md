@@ -2,6 +2,9 @@
 
 A Chrome extension that displays images from TRMNL's API in your new tab page with automatic refresh functionality. **Note**: requires a TRMNL account with a physical device or [BYOD](https://shop.trmnl.com/products/byod) license.
 
+Install from the official Chrome Web Store here:
+[https://chromewebstore.google.com/detail/trmnl-new-tab-display/mffecibmnhdkkmamehgdahldpeoiamfo?utm_source=item-share-cb](https://chromewebstore.google.com/detail/trmnl-new-tab-display/mffecibmnhdkkmamehgdahldpeoiamfo?utm_source=item-share-cb)
+
 ## Features
 
 - Displays TRMNL images in new tab pages
@@ -10,19 +13,10 @@ A Chrome extension that displays images from TRMNL's API in your new tab page wi
 
 ## Installation
 
-Google Chrome:
-
 1. Clone this repository (`git clone git@github.com:usetrmnl/trmnl-chrome.git`)
 2. Open Chrome and navigate to `chrome://extensions`
 3. Enable "Developer mode" in the top right corner
 4. Click "Load unpacked" and select the extension directory
-
-Firefox:
-
-1. Clone this repository (`git clone git@github.com:usetrmnl/trmnl-chrome.git`)
-2. Open Firefox and navigate to `about:addons`
-3. Click the gear cog icon in the top right corner and select "Debug add-ons"
-4. Click "Load Temporary Add-on..." and select the `manifest.json` file inside the extension directory
 
 ## Setup
 

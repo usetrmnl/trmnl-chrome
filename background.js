@@ -296,20 +296,32 @@ async function checkStorageUsage() {
   return false; // Assume no storage limits if method is not available
 }
 
-let fetchInProgress = false;
+let fetchInProgress = null; // The fetch in progress, or null when idle
 
-// Fetch an image from the TRMNL API
-async function fetchTrmnlImage(forceRefresh = false) {
-  console.log("Fetching TRMNL image");
-
-  // Prevent concurrent fetches
-  if (fetchInProgress) {
-    console.log("Fetch already in progress, skipping");
-    return null;
+// Fetch an image from the TRMNL API.
+// A periodic fetch attaches to the fetch in progress. A forced fetch waits for
+// that fetch, then runs. Thus a device change always reaches the API.
+function fetchTrmnlImage(forceRefresh = false) {
+  if (fetchInProgress && !forceRefresh) {
+    console.log("Fetch already in progress, reusing it");
+    return fetchInProgress;
   }
 
-  fetchInProgress = true;
+  const previous = fetchInProgress;
+  const run = (async () => {
+    if (previous) await previous.catch(() => {});
+    return performTrmnlImageFetch(forceRefresh);
+  })();
 
+  fetchInProgress = run;
+  run.catch(() => {}).then(() => {
+    if (fetchInProgress === run) fetchInProgress = null;
+  });
+
+  return run;
+}
+
+async function performTrmnlImageFetch(forceRefresh) {
   // Get the current API URL and initialize environment if needed
   const environment = await chrome.storage.local.get("environment");
   if (!environment.environment) {
@@ -338,15 +350,16 @@ async function fetchTrmnlImage(forceRefresh = false) {
     console.log("No API key set, attempting to fetch from devices");
     const deviceApiKey = await getFirstDeviceApiKey();
     if (deviceApiKey) {
-      await saveApiKey(deviceApiKey);
-      return fetchTrmnlImage(true);
+      // A call to saveApiKey() re-enters fetchTrmnlImage() and deadlocks
+      await chrome.storage.local.set({ apiKey: deviceApiKey });
+      return performTrmnlImageFetch(true);
     }
     console.log("Could not get API key from devices, skipping fetch");
     return null;
   }
 
   // Check if we're in a retry backoff period
-  if (storage.retryAfter && currentTime < storage.retryAfter) {
+  if (!forceRefresh && storage.retryAfter && currentTime < storage.retryAfter) {
     console.log(
       `In retry backoff period. Next attempt in ${Math.ceil((storage.retryAfter - currentTime) / 1000)}s`,
     );
@@ -367,7 +380,6 @@ async function fetchTrmnlImage(forceRefresh = false) {
       if (!devices || devices.length === 0) {
         const loginUrl = await getLoginUrl();
         chrome.tabs.create({ url: loginUrl });
-        fetchInProgress = false;
         return null;
       } else {
         console.log(
@@ -407,12 +419,11 @@ async function fetchTrmnlImage(forceRefresh = false) {
         when: retryTime,
       });
 
-      fetchInProgress = false;
       return null;
     }
 
     // Reset retry count on successful requests
-    if (storage.retryCount > 0) {
+    if (storage.retryCount > 0 || storage.retryAfter) {
       await chrome.storage.local.set({ retryCount: 0, retryAfter: null });
     }
 
@@ -450,16 +461,11 @@ async function fetchTrmnlImage(forceRefresh = false) {
         setupRefreshAlarm(refreshRate);
       }
 
-      fetchInProgress = false;
       return currentImageData.url;
     }
 
     // Get the image as a blob
-    const imageResponse = await fetch(data.image_url, {
-      headers: {
-        "Cache-Control": "no-cache",
-      },
-    });
+    const imageResponse = await fetch(data.image_url);
 
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch image: ${imageResponse.status}`);
@@ -518,10 +524,6 @@ async function fetchTrmnlImage(forceRefresh = false) {
       // Ignore message sending errors, which are expected if no tabs are open
     }
 
-    setTimeout(() => {
-      fetchInProgress = false;
-    }, 1000);
-
     return imageDataUrl;
   } catch (error) {
     console.error("Error fetching TRMNL image:", error);
@@ -541,7 +543,6 @@ async function fetchTrmnlImage(forceRefresh = false) {
     });
 
     console.log(`Scheduled retry in ${retryDelay / 1000} seconds`);
-    fetchInProgress = false;
 
     return null;
   }

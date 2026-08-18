@@ -4,7 +4,12 @@
   "version": "1.2",
   "description": "Displays images from TRMNL API on new tab pages",
   "permissions": ["storage", "alarms"],
-  "host_permissions": ["http://localhost:3000/*", "https://trmnl.com/*"],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://trmnl.com/*",
+    "https://*.your-objectstorage.com/*",
+    "https://*.digitaloceanspaces.com/*"
+  ],
   "devtools_page": "devtools.html",
   "chrome_url_overrides": {
     "newtab": "newtab.html"

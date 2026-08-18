@@ -465,11 +465,7 @@ async function performTrmnlImageFetch(forceRefresh) {
     }
 
     // Get the image as a blob
-    const imageResponse = await fetch(data.image_url, {
-      headers: {
-        "Cache-Control": "no-cache",
-      },
-    });
+    const imageResponse = await fetch(data.image_url);
 
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch image: ${imageResponse.status}`);

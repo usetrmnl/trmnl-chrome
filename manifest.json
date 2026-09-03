@@ -1,14 +1,15 @@
 {
-  "manifest_version": 4,
+  "manifest_version": 3,
   "name": "TRMNL New Tab Display",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Displays images from TRMNL API on new tab pages",
   "permissions": ["storage", "alarms"],
   "host_permissions": [
     "http://localhost:3000/*",
     "https://trmnl.com/*",
     "https://*.your-objectstorage.com/*",
-    "https://*.digitaloceanspaces.com/*"
+    "https://*.digitaloceanspaces.com/*",
+    "https://*.amazonaws.com/*"
   ],
   "devtools_page": "devtools.html",
   "chrome_url_overrides": {
